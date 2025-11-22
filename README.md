@@ -531,4 +531,28 @@ Common error codes:
 - Cursor, Continue, Cline (developer tools)
 - Custom MCP client implementations
 
+## Changelog
+
+### Version 1.0.0 (2025-01-21)
+
+**Initial Release**
+
+- **MCP Protocol**: Implemented MCP 2025-03-26 specification with SSE transport
+- **OAuth 2.0 Authentication**: Full OAuth flow with dynamic client registration (RFC 7591)
+- **20 Tools**: Complete training management toolkit
+  - Profile & Settings: `getUser`, `setZones`, `getAvailability`
+  - Workout Management: `getPlannedWorkouts`, `changeWorkoutDate`, `skipWorkout`, `markWorkout`, `changeWorkoutAdvice`, `createRideRunWorkout`, `createSwimWorkout`
+  - Activity History: `getCyclingActivity`, `getRunningActivity`, `getSwimmingActivity`, `getCyclingActivityDetail`, `getRunningActivityDetail`, `getSwimmingActivityDetail`
+  - Analytics & Insights: `getRaceGoalEvent`, `getPrediction`, `getRecoveryModel`, `getPlanProgress`
+- **20 Resources**: OpenAI Apps SDK UI components for rich ChatGPT widgets
+- **5 Prompts**: Conversation templates for common training workflows
+  - Training Plan Analysis
+  - Activity Analysis
+  - Recovery Check
+  - Custom Workout Creation
+  - Race Planning
+- **Multi-Sport Support**: Cycling, running, swimming, and triathlon
+- **Platform Support**: Claude.ai, Claude Desktop (macOS)
+- **Documentation**: Comprehensive API documentation at https://github.com/ai-endurance/mcp
+
 **Built by AI Endurance** - AI-powered data-driven training for runners, cyclists, and triathletes.
