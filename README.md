@@ -65,7 +65,7 @@ Remote MCP Server URL: https://aiendurance.com/mcp
 **Example:**
 ```
 You: "How was my ride yesterday?"
-Claude: [Displays power distribution, ESS, duration, and zone breakdown]
+Claude: [Displays power distribution, External Stress Score, duration, and zone breakdown]
 ```
 
 ### Other MCP-Compatible Clients
@@ -123,7 +123,7 @@ AI: [Analyzes plan progress showing actual vs prescribed threshold time]
 
 ```
 You: "How was my ride yesterday?"
-AI: [Displays power distribution, normalized power, TSS, duration, and zone breakdown]
+AI: [Displays power distribution, normalized power, stress scores, duration, and zone breakdown]
 
 You: "What was my average pace on runs this month?"
 AI: [Analyzes all January runs and calculates average pace, weekly volume]
@@ -315,7 +315,7 @@ Parameters:
 
 Returns:
 - Array of cycling activities with summary metrics
-- Activity name, date, duration, distance, power, heart rate, TSS
+- Activity name, date, duration, distance, power, heart rate, External Stress Score (ESS)
 
 **`getRunningActivity`**
 List recent running activities. Returns up to 40 most recent runs if no date range specified.
