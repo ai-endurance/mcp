@@ -533,7 +533,7 @@ Common error codes:
 
 ## Changelog
 
-### Version 1.0.0 (2025-01-21)
+### Version 1.0.0 (2025-11-21)
 
 **Initial Release**
 
