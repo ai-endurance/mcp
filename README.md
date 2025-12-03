@@ -81,9 +81,9 @@ Any MCP 2025-03-26 compliant client can connect using:
   },
   "auth": {
     "type": "oauth",
-    "clientUrl": "https://aiendurance.com/authorize/",
-    "authorizationUrl": "https://aiendurance.com/api/o/token/",
-    "scope": "read write"
+    "authorizationUrl": "https://aiendurance.com/authorize/",
+    "tokenUrl": "https://aiendurance.com/api/o/token/",
+    "scopes": ["read", "write"]
   }
 }
 ```
@@ -236,7 +236,6 @@ Parameters:
 Returns:
 - Success confirmation
 - Old and new dates
-- Sync status message
 
 **`skipWorkout`**
 Remove a workout from the training plan. Marks workout as skipped and syncs deletion to connected platforms.
@@ -287,7 +286,6 @@ Parameters:
 Returns:
 - Success confirmation
 - Created workout ID
-- Sync status to connected devices
 
 **`createSwimWorkout`**
 Create custom swim workout with structured sections (warmup, preparation, main, cooldown), sets, intervals, strokes, and equipment.
@@ -302,7 +300,19 @@ Parameters:
 Returns:
 - Success confirmation
 - Created workout ID
-- Sync status to connected devices
+
+**`createStrengthOtherWorkout`**
+Create custom strength or other non-swim/bike/run workout, e.g. cross-country skiing, yoga, hiking.
+
+Parameters:
+- `dateStr`: Date in YYYY-MM-DD format
+- `title`: Workout name
+- `strengthOtherText`: The workout description/instructions in free-form text
+- `isTaper` (optional): Boolean, marks as taper workout (default false)
+
+Returns:
+- Success confirmation
+- Created workout ID
 
 ### Activity History
 
@@ -532,6 +542,9 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.0.1 (2025-12-03)
+- **createStrengthOtherWorkout tool**: new tool to create strength and other workouts (e.g. cross country skiing, yoga, hiking)
 
 ### Version 1.0.0 (2025-11-21)
 
