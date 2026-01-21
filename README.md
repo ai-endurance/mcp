@@ -177,7 +177,7 @@ You: "Show me my fitness trend over the last 8 weeks"
 AI: [Displays prediction model history showing fitness progression]
 ```
 
-## Available Tools (20)
+## Available Tools (21)
 
 ### Profile & Settings
 
@@ -441,6 +441,16 @@ Returns:
   - Anaerobic: actual vs prescribed
 - For triathletes: separate progress for Ride, Run, Swim
 
+**`getNutritionModel`**
+Retrieves the user nutrition model with daily calorie and macronutrient requirements (protein, fat, carbohydrates) including lower and upper bounds.
+
+Returns:
+- Daily calorie and macronutrient requirements for 6 days (1 past day + today + 5 future days)
+- Protein requirements (lower and upper bounds in grams)
+- Fat requirements (lower and upper bounds in grams)
+- Carbohydrate requirements (lower and upper bounds in grams)
+- Based on planned workouts and user physiology
+
 ## Authentication & Security
 
 ### OAuth 2.0 Flow
@@ -542,6 +552,12 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+## [1.40.1733] - 2025-01-20
+
+**Added:**
+- `getNutritionModel` tool: Retrieves daily calorie and macronutrient requirements (protein, fat, carbohydrates) with lower/upper bounds for 6 days (1 past + today + 5 future) based on planned workouts and user physiology.
+- `training_plan_generation_system_prompt` added to `getUser` tool output for LLM context when generating training recommendations.
 
 ### Version 1.0.1 (2025-12-03)
 - **createStrengthOtherWorkout tool**: new tool to create strength and other workouts (e.g. cross country skiing, yoga, hiking)
