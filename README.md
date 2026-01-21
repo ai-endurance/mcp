@@ -553,7 +553,7 @@ Common error codes:
 
 ## Changelog
 
-## [1.40.1733] - 2025-01-20
+### Version 1.0.2 (2025-01-20)
 
 **Added:**
 - `getNutritionModel` tool: Retrieves daily calorie and macronutrient requirements (protein, fat, carbohydrates) with lower/upper bounds for 6 days (1 past + today + 5 future) based on planned workouts and user physiology.
