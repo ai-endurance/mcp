@@ -70,9 +70,25 @@ Claude: [Displays power distribution, External Stress Score, duration, and zone 
 
 ### Other MCP-Compatible Clients
 
-Any MCP 2025-03-26 compliant client can connect using:
+Any MCP 2025-06-18 compliant client can connect using:
 
-**SSE Transport Configuration:**
+**Streamable HTTP Configuration (Recommended):**
+```json
+{
+  "url": "https://aiendurance.com/mcp",
+  "transport": {
+    "type": "http"
+  },
+  "auth": {
+    "type": "oauth",
+    "authorizationUrl": "https://aiendurance.com/authorize/",
+    "tokenUrl": "https://aiendurance.com/api/o/token/",
+    "scopes": ["read", "write"]
+  }
+}
+```
+
+**SSE Transport Configuration (Legacy):**
 ```json
 {
   "url": "https://aiendurance.com/mcp",
@@ -494,8 +510,8 @@ Disconnect access anytime in your mcp client.
 
 ## Technical Specifications
 
-- **Protocol Version**: MCP 2025-03-26
-- **Transport**: Server-Sent Events (SSE)
+- **Protocol Version**: MCP 2025-06-18
+- **Transport**: Streamable HTTP (preferred) or SSE (legacy)
 - **Authentication**: OAuth 2.0
 - **Message Format**: JSON-RPC 2.0
 - **Base URL**: https://aiendurance.com/mcp
@@ -547,11 +563,19 @@ Common error codes:
 - **Claude Desktop** (macOS)
 
 ### Compatible (not officially tested)
-- Any MCP 2025-03-26 compliant client using SSE transport
+- Any MCP 2025-06-18 compliant client using Streamable HTTP or SSE transport
 - Cursor, Continue, Cline (developer tools)
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.0.3 (2026-01-30)
+
+**Changed:**
+- Upgraded to MCP protocol version 2025-06-18
+- Added Streamable HTTP transport support (preferred for new clients)
+- SSE transport maintained for backwards compatibility
+- Added `MCP-Protocol-Version` and `MCP-Session-Id` response headers
 
 ### Version 1.0.2 (2025-01-20)
 
