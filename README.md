@@ -575,7 +575,7 @@ Common error codes:
 - Upgraded to MCP protocol version 2025-06-18
 - Added Streamable HTTP transport support (preferred for new clients)
 - SSE transport maintained for backwards compatibility
-- Added `MCP-Protocol-Version` and `Mcp-Session-Id` response headers
+- Added `MCP-Protocol-Version` and `MCP-Session-Id` response headers
 
 ### Version 1.0.2 (2025-01-20)
 
