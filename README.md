@@ -193,7 +193,7 @@ You: "Show me my fitness trend over the last 8 weeks"
 AI: [Displays prediction model history showing fitness progression]
 ```
 
-## Available Tools (21)
+## Available Tools (20)
 
 ### Profile & Settings
 
@@ -263,18 +263,6 @@ Parameters:
 Returns:
 - Success confirmation
 - Workout details
-
-**`markWorkout`**
-Mark a workout as completed or incomplete. Does not sync to external platforms (internal tracking only).
-
-Parameters:
-- `workoutId`: Database ID of workout
-- `isCompleted`: Boolean (true = completed, false = incomplete)
-- `title` (optional): Workout title for display
-
-Returns:
-- Success confirmation
-- Completion status
 
 **`changeWorkoutAdvice`**
 Add or update coaching advice for a specific workout without modifying the workout structure.
@@ -568,6 +556,11 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.0.4 (2026-03-23)
+
+**Removed:**
+- `markWorkout` tool: This tool no longer exists.
 
 ### Version 1.0.3 (2026-01-30)
 
