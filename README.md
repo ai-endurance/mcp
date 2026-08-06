@@ -1,6 +1,6 @@
 # AI Endurance MCP Server
 
-Connect your AI Endurance training platform to Claude and other AI assistants for conversational access to your training data, workouts, and performance analytics and to manage your training plan.
+Connect your AI Endurance training platform to ChatGPT, Claude, and other AI assistants for conversational access to your training data, workouts, and performance analytics and to manage your training plan.
 
 ## Overview
 
@@ -18,32 +18,23 @@ The AI Endurance MCP server enables AI assistants to access your training plan, 
 
 ## Supported Platforms
 
-<!--
-### ChatGPT (beta mode for Apps & Connectors)
+### ChatGPT
+
+AI Endurance is available in the ChatGPT plugin directory: https://chatgpt.com/plugins/plugin_asdk_app_69456fbb59d081918bcb148a12380f92
 
 **Setup:**
-1. Navigate to ChatGPT settings
-2. Go to "Apps & Connectors"
-3. Scroll down and open "Advanced Settings"
-4. Enable "Developer Mode"
-5. In "Apps & Connectors", select "Create"
-6. Use the following configuration:
+1. Open the plugin directory in ChatGPT and search for "AI Endurance" (or use the link above)
+2. Select "Connect"
+3. Authorize with your AI Endurance account
+4. Start asking questions about your training
 
-```yaml
-Name: AI Endurance
-MCP Server URL: https://aiendurance.com/mcp
-Authentication Type: OAuth
-```
-
-7. Authorize with your AI Endurance credentials
-8. Start asking questions about your training
+ChatGPT additionally renders interactive widgets for most tools, so workouts, activities, recovery, and predictions come back as rich cards rather than plain text.
 
 **Example:**
 ```
 You: "Show me my workouts for this week"
 ChatGPT: [Lists your upcoming workouts with interactive widgets]
 ```
--->
 
 ### Claude.ai
 
@@ -115,7 +106,7 @@ Any MCP 2025-06-18 compliant client can connect using:
 
 - AI Endurance account (sign up at https://aiendurance.com)
 - Active AI Endurance subscription or free trial
-- Access to Claude Pro or MCP-compatible client
+- ChatGPT, Claude, or any other MCP-compatible client
 
 ## Example Conversations
 
@@ -563,7 +554,7 @@ Common error codes:
 ## Platform Compatibility
 
 ### Tested & Working
-<!-- - **ChatGPT** (web interface with Apps & Connectors in Developer Mode) -->
+- **ChatGPT** (web, iOS, Android - from the plugin directory, with interactive widgets)
 - **Claude.ai** (web interface)
 - **Claude Desktop** (macOS)
 
