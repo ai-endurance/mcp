@@ -193,7 +193,7 @@ You: "Show me my fitness trend over the last 8 weeks"
 AI: [Displays prediction model history showing fitness progression]
 ```
 
-## Available Tools (20)
+## Available Tools (22)
 
 ### Profile & Settings
 
@@ -235,9 +235,11 @@ Parameters:
 - `startDate` (optional): Start date in YYYY-MM-DD format (defaults to today)
 - `endDate` (optional): End date in YYYY-MM-DD format (defaults to today + 14 days)
 - `summaryMode` (optional): Boolean - if true, returns lightweight overview with minimal fields, no 35-day cap
+- `fullDetails` (optional): Boolean - if true, includes the machine-readable step structure (`steps_general`, `swim_sections`, zone distribution, compliance data) and untruncated swim intervals
 
 Returns:
-- Array of workouts with date, title, type, duration, zones, intervals
+- Array of workouts with date, title, type, duration, and human-readable warmup/intervals/cooldown descriptions
+- `has_steps_general` per workout, indicating whether a machine-readable structure exists (retrieve it with `fullDetails`)
 - Workout density metrics (workouts per week)
 - Applied date range
 
@@ -283,9 +285,19 @@ Parameters:
 - `dateStr`: Date in YYYY-MM-DD format
 - `title`: Workout name
 - `actType`: "Ride" or "Run"
-- `stepsGeneral`: Array of step objects
+- `stepsGeneral`: Array of step objects (zone-based targets)
 - `isTaper` (optional): Boolean, marks as taper workout (default false)
 - `advice` (optional): Coaching notes
+
+Returns:
+- Success confirmation
+- Created workout ID
+
+**`createRideRunWorkoutAdvanced`**
+Create a ride or run workout with precise numeric power or pace targets - ramp tests, FTP tests, over/under intervals, exact-watt or exact-pace sessions. For simple zone-based workouts use `createRideRunWorkout` instead.
+
+Parameters:
+- Same as `createRideRunWorkout`, except each `stepsGeneral` step additionally supports `targetType` (POWER for watts, SPEED for m/s pace, HEART_RATE for bpm, etc.), a numeric `targetValue`, and explicit `targetValueLow`/`targetValueHigh` bounds. Without explicit bounds the backend derives a +/-5% range around `targetValue`.
 
 Returns:
 - Success confirmation
@@ -321,26 +333,28 @@ Returns:
 ### Activity History
 
 **`getCyclingActivity`**
-List recent cycling activities. Returns up to 40 most recent rides if no date range specified.
+List recent cycling activities. Returns the 20 most recent rides if no date range specified, up to 40 with a date range.
 
 Parameters:
 - `startDate` (optional): YYYY-MM-DD format
 - `endDate` (optional): YYYY-MM-DD format
+- `with_dfa_alpha1` (optional): Boolean - if true, includes the DFA alpha 1 and aerobic/anaerobic threshold fields per activity
 
 Returns:
 - Array of cycling activities with summary metrics
-- Activity name, date, duration, distance, power, heart rate, External Stress Score (ESS)
+- Activity name, date, duration, distance, power, heart rate, External Stress Score (ESS), weather
 
 **`getRunningActivity`**
-List recent running activities. Returns up to 40 most recent runs if no date range specified.
+List recent running activities. Returns the 20 most recent runs if no date range specified, up to 40 with a date range.
 
 Parameters:
 - `startDate` (optional): YYYY-MM-DD format
 - `endDate` (optional): YYYY-MM-DD format
+- `with_dfa_alpha1` (optional): Boolean - if true, includes the DFA alpha 1 and aerobic/anaerobic threshold fields per activity
 
 Returns:
 - Array of running activities with summary metrics
-- Activity name, date, duration, distance, pace, heart rate, running power
+- Activity name, date, duration, distance, pace, heart rate, running power, weather
 
 **`getSwimmingActivity`**
 List recent swimming activities. Returns up to 40 most recent swims if no date range specified.
@@ -426,8 +440,11 @@ Recovery model data including:
 - External stress score
 - Orthopedic recovery (joint/muscle recovery for cycling, running, swimming)
 
+Parameters:
+- `days_back` (optional): How many days of daily recovery data to return, 1-90 (defaults to 14)
+
 Returns:
-- Time-series data showing recovery trends (past 30 days)
+- Time-series data showing recovery trends (past 14 days by default)
 - Current recovery status
 - Recovery drivers (what's limiting recovery today)
 - Activity-specific orthopedic recovery
@@ -556,6 +573,18 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.0.5 (2026-08-06)
+
+**Added:**
+- `createRideRunWorkoutAdvanced` tool: creates ride/run workouts with precise numeric power or pace targets (ramp tests, FTP tests, over/unders, exact-watt or exact-pace sessions).
+- `fullDetails` parameter on `getPlannedWorkouts`: returns the machine-readable step structure and untruncated swim intervals.
+- `with_dfa_alpha1` parameter on `getCyclingActivity` and `getRunningActivity`: returns the DFA alpha 1 and threshold fields.
+- `days_back` parameter on `getRecoveryModel`: widens the returned window up to 90 days.
+- Weather at the activity start in the cycling and running activity summaries.
+
+**Changed:**
+- Leaner default responses so tool results stay small: `getPlannedWorkouts` returns human-readable workout descriptions plus a `has_steps_general` flag instead of the full step structure; `getCyclingActivity` and `getRunningActivity` return 20 activities without a date range (40 with one) and omit the DFA alpha 1 fields; `getRecoveryModel` returns the last 14 days instead of the full history. Each is restored by the corresponding parameter above.
 
 ### Version 1.0.4 (2026-03-23)
 
