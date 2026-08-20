@@ -15,6 +15,7 @@ The AI Endurance MCP server enables AI assistants to access your training plan, 
 - **Zone Management** - Update and view training zones (pace, power)
 - **Workout Scheduling** - Move workouts, adjust availability, track plan progress
 - **Race Goals** - Manage primary and secondary race objectives
+- **Activity Flags** - Correct indoor/virtual/erg detection and exclude bad-sensor activities from analysis
 
 ## Supported Platforms
 
@@ -140,6 +141,12 @@ AI: [Provides detailed time-series power data with peak power efforts]
 
 You: "Compare my last 3 long runs"
 AI: [Pulls detailed metrics and compares pace, heart rate, duration trends]
+
+You: "Yesterday's ride was on Zwift, not outdoors"
+AI: [Marks the activity indoor and virtual, and updates the stored weather]
+
+You: "My HR strap was dead on this run - don't use its heart rate"
+AI: [Flags the heart rate data as unreliable and rebuilds the HRV aggregates]
 ```
 
 ### Recovery & Fitness
@@ -184,7 +191,7 @@ You: "Show me my fitness trend over the last 8 weeks"
 AI: [Displays prediction model history showing fitness progression]
 ```
 
-## Available Tools (22)
+## Available Tools (23)
 
 ### Profile & Settings
 
@@ -401,6 +408,29 @@ Returns:
 - Lap-by-lap breakdown
 - Stroke analysis
 
+### Activity Flags
+
+**`setActivityFlags`**
+Set per-activity flags on a cycling or running activity: indoor, virtual, erg mode, and read-time analysis exclusions. Use when an activity was misdetected (an indoor ride treated as outdoor) or when bad sensor data should be kept out of the analyses. Only the flags you pass change; the others stay untouched.
+
+Parameters:
+- `activityId`: Activity database ID (from `getCyclingActivity` / `getRunningActivity`)
+- `sport`: "cycling" or "running"
+- `isIndoor` (optional): Activity was performed indoors (trainer/treadmill/virtual). Also swaps the stored weather to the indoor marker, or re-fetches outdoor weather when flipped back to outdoor.
+- `isVirtual` (optional): Virtual ride/run (Zwift, Rouvy, etc.). Implies indoor.
+- `isErgMode` (optional): Recorded in erg mode (the trainer controls power)
+- `excludeFromCurves` (optional): Exclude from aggregate power/pace-duration curves and recent-best comparisons (e.g. power meter malfunction)
+- `excludeFromModel` (optional): Exclude from digital twin (GRU) model training data
+- `excludeFromDurability` (optional): Exclude from durability curve aggregation
+- `excludeHrData` (optional): Heart rate data is unreliable (e.g. strap failure) - excludes the activity from HRV/alpha 1 aggregation and from model training while keeping the power/pace analyses
+
+Returns:
+- Success confirmation and a human-readable summary of what changed
+- `flags`: current values of all seven flags after the update
+- `retrain_queued`: whether the change queued a digital twin retrain (`excludeFromModel` and `excludeHrData` do; `excludeHrData` additionally rebuilds the stored HRV aggregates)
+
+Notes: flags you set by hand are pinned, so later automatic detection will not overwrite them. The flag values are also returned on every activity in the `getCyclingActivity` / `getRunningActivity` list and detail results.
+
 ### Analytics & Insights
 
 **`getRaceGoalEvent`**
@@ -493,7 +523,7 @@ The MCP server has access to:
 
 The MCP server **cannot**:
 - Start training plan generation
-- Create or modify data exclusions
+- Create or modify date-range data exclusions (per-activity flags are settable with `setActivityFlags`)
 - Alter your connections to third-party platforms (Garmin, Strava, etc.)
 - Delete your account
 - Modify account billing settings
@@ -564,6 +594,12 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.0.6 (2026-08-20)
+
+**Added:**
+- `setActivityFlags` tool: sets the per-activity flags on a cycling or running activity - indoor, virtual, erg mode, and the read-time analysis exclusions (power/pace curves, digital twin model training, durability, unreliable heart rate data). Manually set flags are pinned against later automatic detection, setting `isIndoor` keeps the stored activity weather consistent, and the exclusions that change the training data queue a digital twin retrain (plus an HRV aggregate rebuild for `excludeHrData`).
+- The flag fields are now returned on every activity in the `getCyclingActivity`, `getRunningActivity`, and the corresponding detail results.
 
 ### Version 1.0.5 (2026-08-06)
 
