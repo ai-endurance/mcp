@@ -17,6 +17,8 @@ The AI Endurance MCP server enables AI assistants to access your training plan, 
 - **Race Goals** - Manage primary and secondary race objectives
 - **Activity Flags** - Correct indoor/virtual/erg detection and exclude bad-sensor activities from analysis
 - **Durability** - See how power or pace held up as work accumulated within a session, and how that compares to your own trend
+- **Computed Activity Analytics** - Server-side normalized power, intensity factor, time-in-zone, pacing/fade and split tables for any activity, without reading raw streams
+- **Other Sports** - List strength, ski, yoga, hike and other non-run/ride/swim activities
 
 ## Supported Platforms
 
@@ -192,7 +194,7 @@ You: "Show me my fitness trend over the last 8 weeks"
 AI: [Displays prediction model history showing fitness progression]
 ```
 
-## Available Tools (23)
+## Available Tools (27)
 
 ### Profile & Settings
 
@@ -277,6 +279,21 @@ Returns:
 - Success confirmation
 - Updated advice text
 
+**`changeWorkoutIntensity`**
+Change the intensity (load) of an existing planned ride or run workout in place. The workout's intensity zone is preserved - the step durations are recomputed at the new load.
+
+Parameters:
+- `workoutId`: Database ID of workout (the `workout_id` field of a `getPlannedWorkouts` result)
+- `ess`: New training stress score (required if `intensityTime` not provided)
+- `intensityTime`: New time at intensity in seconds (required if `ess` not provided)
+- `repeats` (optional): New number of repeats at the intensity
+- `title` (optional): Workout title for display
+
+Returns:
+- Success confirmation with the updated title, date and training stress
+
+Note: only works on workouts with a scalable step structure (algorithm-generated plan workouts and workouts from `createRideRunWorkoutByIntensity` both qualify - `has_steps_general` is false on `getPlannedWorkouts`). On a structured workout it fails cleanly with `WORKOUT_HAS_NO_STEPS`; skip the workout and recreate it with `createRideRunWorkout` or `createRideRunWorkoutByIntensity` instead.
+
 **`createRideRunWorkout`**
 Create custom structured workout for cycling or running with intervals, repeats, and zones.
 
@@ -301,6 +318,24 @@ Parameters:
 Returns:
 - Success confirmation
 - Created workout ID
+
+**`createRideRunWorkoutByIntensity`**
+Create a simple ride or run workout from one intensity zone plus a target load - no step structure needed. For structured workouts with custom warmup/interval/cooldown steps use `createRideRunWorkout` instead.
+
+Parameters:
+- `dateStr`: Date in YYYY-MM-DD format
+- `actType`: "Ride" or "Run" (must match the user's sport: Runner users only Run, Cyclist users only Ride, Triathlete users both)
+- `intensityType`: "Endurance", "Tempo", "Threshold", "VO2Max" or "Anaerobic"
+- `ess`: Target training stress score (required if `intensityTime` not provided; more than about 100 is a hard workout)
+- `intensityTime`: Target time at intensity in seconds (required if `ess` not provided)
+- `repeats` (optional): Number of repeats at the intensity, for Tempo and above
+- `isTaper` (optional): Boolean, marks as taper workout (default false)
+
+Returns:
+- Success confirmation
+- Created workout ID and title
+
+Note: if a workout with the same date, sport and load already exists, that existing workout is returned instead of a duplicate.
 
 **`createSwimWorkout`**
 Create custom swim workout with structured sections (warmup, preparation, main, cooldown), sets, intervals, strokes, and equipment.
@@ -438,6 +473,34 @@ Returns:
 - Time-series metrics: pace, stroke rate, distance per stroke, pool length
 - Lap-by-lap breakdown
 - Stroke analysis
+
+**`analyzeActivityStream`**
+Computes quantitative analytics for one activity server-side and returns a compact summary. Prefer this over the detail tools whenever you want numbers - normalized power, intensity factor, variability, time-in-zone, pacing/fade (first vs second half), or channel extremes (avg/max/min power, heart rate, cadence, pace). Not for durability, DFA alpha 1 thresholds, or the mean-max curve - those live behind the detail tools' opt-in flags.
+
+Parameters:
+- `activityId`: the activity id (the `id` field of an activity list result)
+- `activityType`: "Ride", "Run" or "Swim"
+- `segments` (optional): "auto" (default) adds a small table of equal time-window splits (avg power/speed + HR per window); "none" skips it. These are computed windows, not the device laps.
+- `range` (optional): `{"type": "time_seconds", "from": seconds, "to": seconds}` restricts the whole analysis to a time window - e.g. the first 30 minutes, or one device lap via the detail tools' `start_s`/`end_s`
+
+Returns (blocks omitted when the activity lacks the data):
+- Overview: moving/elapsed time, distance, elevation gain
+- `power`: avg/max/min, normalized power, variability index, intensity factor
+- `heart_rate`, `cadence`, `pace_m_per_s`
+- `pacing`: first vs second half averages and `fade_pct` (positive = second half lower power / slower; terrain-naive, so check the per-half ascent/descent before calling a fade physiological)
+- `time_in_zone` and `segments`
+
+**`getOtherActivity`**
+List activities from any sport outside running, cycling, and swimming - strength training, cross-country skiing, yoga, hiking, walking. Returns the 20 most recent if no date range specified, up to 40 with a date range.
+
+Parameters:
+- `startDate` (optional): YYYY-MM-DD format
+- `endDate` (optional): YYYY-MM-DD format
+
+Returns:
+- Array of activities with name, type, date, duration, average heart rate, stress scores, elevation gain, distance, calories
+
+Note: other activities are duration-only. There is no time-series/stream data and no detail tool for them, so do not expect power, pace, HRV, or per-second metrics.
 
 ### Activity Flags
 
@@ -625,6 +688,16 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.2.0 (2026-08-25)
+
+**Added:**
+- `analyzeActivityStream` tool: server-side computed analytics for one activity - normalized power, intensity factor, variability, time-in-zone, first-vs-second-half pacing/fade, channel extremes, and optional equal time-window splits, with an optional time range (e.g. one device lap). This is the recommended path for quantitative questions; the detail tools' raw arrays stay off by default.
+- `getOtherActivity` tool: lists activities from any sport outside running, cycling, and swimming (strength, ski, yoga, hike, ...). Duration-only - no stream data and no detail tool.
+- `createRideRunWorkoutByIntensity` tool: creates a simple ride or run workout from one intensity zone plus a target load (`ess` and/or `intensityTime`), without authoring a step list.
+- `changeWorkoutIntensity` tool: rescales an existing planned ride or run workout in place to a new `ess` and/or `intensityTime`, preserving its intensity zone. Structured (steps_general) workouts fail cleanly with `WORKOUT_HAS_NO_STEPS` and should be skipped and recreated instead.
+
+This brings the MCP tool surface to parity with the AI Endurance chatbot's backend tooling.
 
 ### Version 1.1.0 (2026-08-25)
 
