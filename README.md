@@ -16,6 +16,7 @@ The AI Endurance MCP server enables AI assistants to access your training plan, 
 - **Workout Scheduling** - Move workouts, adjust availability, track plan progress
 - **Race Goals** - Manage primary and secondary race objectives
 - **Activity Flags** - Correct indoor/virtual/erg detection and exclude bad-sensor activities from analysis
+- **Durability** - See how power or pace held up as work accumulated within a session, and how that compares to your own trend
 
 ## Supported Platforms
 
@@ -340,6 +341,7 @@ Parameters:
 
 Returns:
 - Array of cycling activities with summary metrics
+- `id`: the activity id - pass it as `activityId` to `getCyclingActivityDetail` or `setActivityFlags`
 - Activity name, date, duration, distance, power, heart rate, External Stress Score (ESS), weather
 
 **`getRunningActivity`**
@@ -352,6 +354,7 @@ Parameters:
 
 Returns:
 - Array of running activities with summary metrics
+- `id`: the activity id - pass it as `activityId` to `getRunningActivityDetail` or `setActivityFlags`
 - Activity name, date, duration, distance, pace, heart rate, running power, weather
 
 **`getSwimmingActivity`**
@@ -363,44 +366,72 @@ Parameters:
 
 Returns:
 - Array of swimming activities with summary metrics
+- `id`: the activity id - pass it as `activityId` to `getSwimmingActivityDetail`
 - Activity name, date, duration, distance, pace, stroke rate
 
 **`getCyclingActivityDetail`**
-Detailed metrics for specific cycling activity including time-series data (power, heart rate, cadence, speed, elevation).
+Detailed data for one cycling activity. The default response is deliberately light; the durability, power-curve and raw sample data are each opt-in.
 
 Parameters:
-- `activityId`: Activity database ID (from getCyclingActivity)
-- `resolution` (optional): Data resolution
+- `activityId`: the activity id (the `id` field of a `getCyclingActivity` result)
+- `with_dfa_alpha1` (optional): Boolean - adds the DFA alpha 1 threshold values and `durability_drift`
+- `with_power_curve` (optional): Boolean - adds the peak power curve, % of recent best, effort structure and `within_session_durability`
+- `with_time_series_metrics` (optional): Boolean - adds the raw per-sample arrays. Default false
+- `resolution` (optional): sampling for the raw arrays, so it has no effect unless `with_time_series_metrics` is true
   - `"low"`: ~200 points, ~5KB, ~1,250 tokens (default)
   - `"medium"`: ~500 points, ~12KB, ~3,000 tokens
   - `"high"`: ~1000 points, ~25KB, ~6,250 tokens
   - `"full"`: All data points (18k-125k tokens - use sparingly!)
 
-Returns:
-- Complete activity metadata
-- Time-series metrics: power, heart rate, cadence, speed, elevation, latitude, longitude
-- Zone distributions
-- Best efforts (peak power across durations)
+Returns by default:
+- `id` and the complete activity metadata (date, duration, distance, average power/HR, stress scores, weather, the activity flags)
+- `laps`: the device laps the head unit recorded, with per-lap power, HR, cadence and respiration
+
+With `with_dfa_alpha1`:
+- The aerobic/anaerobic threshold values, the a1 scalars, and each lap's average a1
+- `durability_drift`: how this ride's internal drift (heart rate, DFA a1, respiration frequency) sat against your **own** fitted ~6-week trend at matched work - mean residual, position versus the confidence band, the trend's %-loss at the anchors, and the number of rides behind the trend. Needs clean R-R, so it is absent on rides without it
+
+With `with_power_curve`:
+- `power_curve` and `pct_of_recent_best` (percent of your recent best at each duration)
+- `effort_structure`: time spent by intensity band and bout length
+- `within_session_durability`: how far sustained power fell off as work accumulated within the ride, along the ride's own kJ axis. Needs no HRV, so it is available on essentially any ride with power
+
+With `with_time_series_metrics`:
+- The raw per-sample arrays: power, heart rate, cadence, altitude, respiration frequency (plus the a1 channels when `with_dfa_alpha1` is also set), sampled to `resolution`
 
 **`getRunningActivityDetail`**
-Detailed metrics for specific running activity including time-series data (pace, heart rate, power, elevation, cadence).
+Detailed data for one running activity. Same opt-in structure as the cycling detail tool.
 
 Parameters:
-- `activityId`: Activity database ID (from getRunningActivity)
-- `resolution` (optional): Data resolution (same as cycling)
+- `activityId`: the activity id (the `id` field of a `getRunningActivity` result)
+- `with_dfa_alpha1` (optional): Boolean - adds the DFA alpha 1 threshold values and `durability_drift`
+- `with_power_curve` (optional): Boolean - adds the peak GAP-pace and running-power curves, % of recent best, effort structure and `within_session_durability`
+- `with_time_series_metrics` (optional): Boolean - adds the raw per-sample arrays. Default false
+- `resolution` (optional): sampling for the raw arrays (same as cycling), so it has no effect unless `with_time_series_metrics` is true
 
-Returns:
-- Complete activity metadata
-- Time-series metrics: pace, heart rate, running power, elevation, cadence, latitude, longitude
-- Zone distributions
-- Best efforts (peak pace/power across durations)
+Returns by default:
+- `id` and the complete activity metadata (date, duration, distance, average pace/power/HR, stress scores, weather, the activity flags)
+- `laps`: the device laps the watch recorded, with per-lap pace, power, HR, cadence and respiration
+
+With `with_dfa_alpha1`:
+- The aerobic/anaerobic threshold values, the a1 scalars, and each lap's average a1
+- `durability_drift`: this run's internal drift (heart rate, DFA a1, respiration frequency) against your **own** fitted ~6-week trend at matched work. Needs clean R-R, so it is absent on runs without it
+
+With `with_power_curve`:
+- `pace_curve`, `running_power_curve` and `pct_of_recent_best`
+- `effort_structure`: time spent by intensity band and bout length
+- `within_session_durability`, split by channel (`gap` for GAP pace, `power` for running power): how far sustained pace or power fell off as distance accumulated within the run, along its own GAP-km axis. Needs no HRV, so it is available on essentially any run
+
+With `with_time_series_metrics`:
+- The raw per-sample arrays: pace, heart rate, running power, altitude, cadence, respiration frequency (plus the a1 channels when `with_dfa_alpha1` is also set), sampled to `resolution`
 
 **`getSwimmingActivityDetail`**
 Detailed metrics for specific swimming activity including time-series data (pace, stroke rate, distance per stroke).
 
 Parameters:
-- `activityId`: Activity database ID (from getSwimmingActivity)
-- `resolution` (optional): Data resolution (same as cycling)
+- `activityId`: the activity id (the `id` field of a `getSwimmingActivity` result)
+- `with_time_series_metrics` (optional): Boolean - adds the raw per-sample arrays. Default false
+- `resolution` (optional): sampling for the raw arrays (same as cycling), so it has no effect unless `with_time_series_metrics` is true
 
 Returns:
 - Complete activity metadata
@@ -414,7 +445,7 @@ Returns:
 Set per-activity flags on a cycling or running activity: indoor, virtual, erg mode, and read-time analysis exclusions. Use when an activity was misdetected (an indoor ride treated as outdoor) or when bad sensor data should be kept out of the analyses. Only the flags you pass change; the others stay untouched.
 
 Parameters:
-- `activityId`: Activity database ID (from `getCyclingActivity` / `getRunningActivity`)
+- `activityId`: the activity id (the `id` field of a `getCyclingActivity` / `getRunningActivity` result)
 - `sport`: "cycling" or "running"
 - `isIndoor` (optional): Activity was performed indoors (trainer/treadmill/virtual). Also swaps the stored weather to the indoor marker, or re-fetches outdoor weather when flipped back to outdoor.
 - `isVirtual` (optional): Virtual ride/run (Zwift, Rouvy, etc.). Implies indoor.
@@ -594,6 +625,24 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.1.0 (2026-08-25)
+
+**Added:**
+- Every activity in `getCyclingActivity`, `getRunningActivity` and `getSwimmingActivity` now carries its `id`. Pass it as `activityId` to the matching detail tool or to `setActivityFlags`. Previously no response exposed an id, so the detail tools and `setActivityFlags` could not be called from a list result.
+- `with_dfa_alpha1` on `getCyclingActivityDetail` and `getRunningActivityDetail`: the DFA alpha 1 threshold values plus `durability_drift` - how that session's internal drift (heart rate, DFA a1, respiration frequency) sat against your own fitted ~6-week trend at matched work. Needs clean R-R data.
+- `with_power_curve` on the same two tools: the peak power/pace curve, percent of your recent best, the effort-structure summary, and `within_session_durability` - how far sustained power or pace fell off as work accumulated within the session, along its own kJ or GAP-km axis. Needs no HRV, so it is available on essentially every ride and run.
+- `with_time_series_metrics` on all three detail tools: returns the raw per-sample arrays.
+
+**Changed:**
+- The detail tools no longer return the raw per-sample `time_series_metrics` arrays by default - set `with_time_series_metrics` to get them. The derived objects above answer pacing, fade and durability questions without them.
+- The DFA alpha 1 threshold values on the detail tools now require `with_dfa_alpha1`, matching how the summary tools have gated them since 1.0.5.
+- `resolution` only affects the raw arrays, so it is a no-op unless `with_time_series_metrics` is set.
+
+Nothing was removed: both changes are opt-in, but a client that parsed the raw arrays or the a1 values from a detail response must now pass the corresponding flag.
+
+**Fixed:**
+- A detail tool called without an `activityId` returned a generic "Tool execution failed" error instead of an empty result.
 
 ### Version 1.0.6 (2026-08-20)
 
