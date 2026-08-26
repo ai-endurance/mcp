@@ -390,7 +390,7 @@ Parameters:
 Returns:
 - Array of running activities with summary metrics
 - `id`: the activity id - pass it as `activityId` to `getRunningActivityDetail` or `setActivityFlags`
-- Activity name, date, duration, distance, pace, heart rate, running power, weather
+- Activity name, date, duration, `gradient_adjusted_pace` (GAP - the only pace reported for runs), heart rate, running power, weather
 
 **`getSwimmingActivity`**
 List recent swimming activities. Returns up to 40 most recent swims if no date range specified.
@@ -424,7 +424,7 @@ Returns by default:
 
 With `with_dfa_alpha1`:
 - The aerobic/anaerobic threshold values, the a1 scalars, and each lap's average a1
-- `durability_drift`: how this ride's internal drift (heart rate, DFA a1, respiration frequency) sat against your **own** fitted ~6-week trend at matched work - mean residual, position versus the confidence band, the trend's %-loss at the anchors, and the number of rides behind the trend. Needs clean R-R, so it is absent on rides without it
+- `durability_drift`: how this ride's internal drift (heart rate, DFA a1, respiration frequency) sat against your **own** fitted ~6-week trend at matched work - mean residual, position versus the confidence band, the trend's %-loss at the anchors, and the number of rides behind the trend. Each metric also carries a plain `verdict` (`more_durable`, `less_durable`, `typical` or `mixed`; null when that metric has too few efforts in the ride to support a claim), and the object carries an `overall` verdict across the metrics that have one. Needs clean R-R, so it is absent on rides without it
 
 With `with_power_curve`:
 - `power_curve` and `pct_of_recent_best` (percent of your recent best at each duration)
@@ -446,11 +446,11 @@ Parameters:
 
 Returns by default:
 - `id` and the complete activity metadata (date, duration, distance, average pace/power/HR, stress scores, weather, the activity flags)
-- `laps`: the device laps the watch recorded, with per-lap pace, power, HR, cadence and respiration
+- `laps`: the device laps the watch recorded, with per-lap `avg_pace_device` (the watch's raw pace, not GAP), power, HR, cadence and respiration
 
 With `with_dfa_alpha1`:
 - The aerobic/anaerobic threshold values, the a1 scalars, and each lap's average a1
-- `durability_drift`: this run's internal drift (heart rate, DFA a1, respiration frequency) against your **own** fitted ~6-week trend at matched work. Needs clean R-R, so it is absent on runs without it
+- `durability_drift`: this run's internal drift (heart rate, DFA a1, respiration frequency) against your **own** fitted ~6-week trend at matched work, with the same per-metric `verdict` and `overall` verdict as the cycling tool. Needs clean R-R, so it is absent on runs without it
 
 With `with_power_curve`:
 - `pace_curve`, `running_power_curve` and `pct_of_recent_best`
@@ -458,7 +458,7 @@ With `with_power_curve`:
 - `within_session_durability`, split by channel (`gap` for GAP pace, `power` for running power): how far sustained pace or power fell off as distance accumulated within the run, along its own GAP-km axis. Needs no HRV, so it is available on essentially any run
 
 With `with_time_series_metrics`:
-- The raw per-sample arrays: pace, heart rate, running power, altitude, cadence, respiration frequency (plus the a1 channels when `with_dfa_alpha1` is also set), sampled to `resolution`
+- The raw per-sample arrays: `gap` (the GAP stream, with its unit in `gap_unit`), heart rate, running power, altitude, cadence, respiration frequency (plus the a1 channels when `with_dfa_alpha1` is also set), sampled to `resolution`
 
 **`getSwimmingActivityDetail`**
 Detailed metrics for specific swimming activity including time-series data (pace, stroke rate, distance per stroke).
@@ -486,7 +486,7 @@ Parameters:
 Returns (blocks omitted when the activity lacks the data):
 - Overview: moving/elapsed time, distance, elevation gain
 - `power`: avg/max/min, normalized power, variability index, intensity factor
-- `heart_rate`, `cadence`, `pace_m_per_s`
+- `heart_rate`, `cadence`, and the pace channel: `gap_m_per_s` for runs (GAP), `pace_m_per_s` for swims
 - `pacing`: first vs second half averages and `fade_pct` (positive = second half lower power / slower; terrain-naive, so check the per-half ascent/descent before calling a fade physiological)
 - `time_in_zone` and `segments`
 
@@ -688,6 +688,23 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.3.0 (2026-08-26)
+
+**Added:**
+- `durability_drift` (the `with_dfa_alpha1` view on `getCyclingActivityDetail` and `getRunningActivityDetail`) now states its own conclusion. Each metric carries a `verdict` - `more_durable`, `less_durable`, `typical` or `mixed` - and the object carries an `overall` verdict plus the counts behind it (`more_durable`, `less_durable`, `counted`). Read those instead of deriving a direction from `mean_residual_vs_trend`: the sign convention is inverted for DFA a1 (higher = less fatigue), which is easy to get backwards.
+- A metric's `verdict` is `null` when that session has too few efforts in it to support a claim, and `overall` is absent when no metric qualifies. Treat null as "no read", not as "typical".
+
+**Changed:**
+- **Run pace fields are renamed to say what they actually are.** Every pace AI Endurance derives for a run is GAP (Gradient Adjusted Pace, normalized for gradient), which on hilly runs reads faster than the watch's raw pace by design. Under their old neutral names these were being reported as plain pace, and mixed with the raw per-lap values. Renamed, runs only:
+  - `getRunningActivity` and `getRunningActivityDetail`: `activity_avpace` -> `gradient_adjusted_pace`
+  - `getRunningActivityDetail` laps: `avg_pace` -> `avg_pace_device` (this one is the watch's RAW pace, straight off the device - never compare it against `gradient_adjusted_pace`)
+  - `getRunningActivityDetail` raw arrays: the `pace` / `pace_unit` stream -> `gap` / `gap_unit`
+  - `analyzeActivityStream` on a run: `pace_m_per_s` -> `gap_m_per_s`, the segment/window `avg_speed_m_per_s` -> `avg_gap_m_per_s`, and `pacing.basis` -> `gap_m_per_s`
+  - Swimming is untouched: its pace channel really is raw pace and keeps the plain names. Rides have no pace channel.
+- The activity-detail widget no longer shows a durability metric that has too few efforts behind it, rather than stating a direction the data does not support. Thin sessions therefore show less than before.
+
+A client that parsed any of the renamed run pace fields must update: the old names are gone, not deprecated. Nothing else was removed.
 
 ### Version 1.2.0 (2026-08-25)
 
