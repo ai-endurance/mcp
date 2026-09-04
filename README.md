@@ -634,6 +634,7 @@ Disconnect access anytime in your mcp client.
 - **Transport**: Streamable HTTP (preferred) or SSE (legacy)
 - **Authentication**: OAuth 2.0
 - **Message Format**: JSON-RPC 2.0
+- **Tool Results**: every tool declares an `outputSchema`. A successful `tools/call` result returns the JSON in a `content` text block and, identically, in `structuredContent`, which conforms to that schema. Results with `isError: true` carry the message in `content` only.
 - **Base URL**: https://aiendurance.com/mcp
 - **Messages Endpoint**: https://aiendurance.com/mcp/messages
 - **Manifest**: https://aiendurance.com/.well-known/ai-plugin.json
@@ -685,9 +686,15 @@ Common error codes:
 ### Compatible (not officially tested)
 - Any MCP 2025-06-18 compliant client using Streamable HTTP or SSE transport
 - Cursor, Continue, Cline (developer tools)
+- Clients that validate results against `outputSchema`, such as the LiteLLM MCP proxy and Hermes Agent
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.3.1 (2026-09-04)
+
+**Fixed:**
+- Every tool result now carries `structuredContent` for every client, not only ChatGPT. Each tool declares an `outputSchema`, and the MCP specification then requires the result to include structured content that matches it. Clients built on the official MCP SDKs, such as the LiteLLM MCP proxy and Hermes Agent, enforce that rule and were rejecting every call with "has an output schema but did not return structured content". Claude.ai and Claude Desktop do not validate and were unaffected. The `content` text block still holds the same JSON, so a client that reads text sees no change.
 
 ### Version 1.3.0 (2026-08-26)
 
