@@ -40,22 +40,17 @@ You: "Show me my workouts for this week"
 ChatGPT: [Lists your upcoming workouts with interactive widgets]
 ```
 
-### Claude.ai
+### Claude
+
+AI Endurance is available in the Claude connector directory: https://claude.ai/directory/ai-endurance
 
 **Setup:**
-1. Navigate to Claude.ai settings
-2. Go to "Connectors"
-3. Select "Add custom connector"
-4. Use the following configuration:
+1. Open the link above, or go to Settings > Connectors in Claude and search for "AI Endurance"
+2. Select "Connect"
+3. Authorize with your AI Endurance account
+4. Start asking questions about your training
 
-```yaml
-Name: AI Endurance
-Remote MCP Server URL: https://aiendurance.com/mcp
-```
-
-5. Click "Add"
-6. Authorize with your AI Endurance account
-7. Start asking questions about your training
+The connector works in Claude on the web, desktop and mobile, and in Claude Code. If your organization does not allow directory connectors, you can still add it as a custom connector under Settings > Connectors with the URL `https://aiendurance.com/mcp`.
 
 **Example:**
 ```
@@ -645,7 +640,25 @@ No explicit rate limits currently enforced. Standard API usage guidelines apply 
 
 ### Error Handling
 
-Errors returned in MCP-compliant format:
+Errors follow the MCP specification and come in three kinds.
+
+**Authentication (HTTP 401):** a request without a valid token gets HTTP 401 with a `WWW-Authenticate` header pointing at the protected resource metadata:
+
+```
+WWW-Authenticate: Bearer resource_metadata="https://aiendurance.com/.well-known/oauth-protected-resource/mcp", scope="read write"
+```
+
+**Protocol errors (JSON-RPC error object):** an unknown tool or prompt returns code `-32602`, a missing resource `-32002`, and an unknown method `-32601`.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "error": { "code": -32602, "message": "Unknown tool: getFoo" }
+}
+```
+
+**Tool errors (result with `isError: true`):** a tool that refuses the request (for example a workout that is not in your active plan) or fails returns its message in `content`, without `structuredContent`:
 
 ```json
 {
@@ -661,12 +674,7 @@ Errors returned in MCP-compliant format:
 }
 ```
 
-Common error codes:
-- **401**: Authentication required or token expired
-- **403**: Insufficient permissions
-- **404**: Workout/activity not found
-- **422**: Validation error (invalid parameters)
-- **500**: Internal server error
+When a tool fails because of a problem on our side, the message does not expose internals. It tells the model what to do instead: read-only tools may be retried once, while tools that change data must not be repeated, because the change may have been partly saved. The model should check the current state with the matching read tool.
 
 ## Support & Resources
 
@@ -680,8 +688,8 @@ Common error codes:
 
 ### Tested & Working
 - **ChatGPT** (web, iOS, Android - from the plugin directory, with interactive widgets)
-- **Claude.ai** (web interface)
-- **Claude Desktop** (macOS)
+- **Claude** (web, desktop, iOS, Android - from the connector directory)
+- **Claude Code**
 
 ### Compatible (not officially tested)
 - Any MCP 2025-06-18 compliant client using Streamable HTTP or SSE transport
@@ -690,6 +698,17 @@ Common error codes:
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.3.2 (2026-10-13)
+
+**Changed:**
+- Errors follow the MCP specification (see Error Handling). An unknown tool or prompt now returns a JSON-RPC error with code `-32602` and a missing resource `-32002`, instead of a tool result with `isError: true`.
+- When a tool fails because of a problem on our side, the result no longer contains the raw exception text. It says whether the call is safe to retry: read-only tools may be retried once, tools that change data must not be repeated because the change may have been partly saved.
+- When a tool refuses a request, the result has `isError: true` with the reason in `content` and no `structuredContent`, so clients that validate against `outputSchema` no longer see a refusal as a malformed success.
+- The HTTP 401 `WWW-Authenticate` header now points at `https://aiendurance.com/.well-known/oauth-protected-resource/mcp`, whose `resource` is the server URL `https://aiendurance.com/mcp`, and names the scopes `read write`.
+
+**Added:**
+- Every tool now carries its readable name in `annotations.title` as well as in the top-level `title`, for clients that read it from the annotations. ChatGPT keeps reading the top-level `title`.
 
 ### Version 1.3.1 (2026-09-04)
 
