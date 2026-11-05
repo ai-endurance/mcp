@@ -1,0 +1,14 @@
+{
+  "name": "ai-endurance",
+  "displayName": "AI Endurance",
+  "version": "1.0.0",
+  "description": "Daily readiness check-ins, activity analysis, weekly plan reviews and weather pacing for your AI Endurance training plan.",
+  "author": {
+    "name": "AI Endurance",
+    "url": "https://aiendurance.com"
+  },
+  "homepage": "https://aiendurance.com/docs/mcp",
+  "repository": "https://github.com/ai-endurance/mcp",
+  "license": "MIT",
+  "privacyPolicyUrl": "https://aiendurance.com/privacypolicy"
+}

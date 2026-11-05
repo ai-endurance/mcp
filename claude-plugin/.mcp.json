@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ai-endurance": {
+      "type": "http",
+      "url": "https://aiendurance.com/mcp"
+    }
+  }
+}

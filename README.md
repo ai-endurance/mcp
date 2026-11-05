@@ -52,6 +52,8 @@ AI Endurance is available in the Claude connector directory: https://claude.ai/d
 
 The connector works in Claude on the web, desktop and mobile, and in Claude Code. If your organization does not allow directory connectors, you can still add it as a custom connector under Settings > Connectors with the URL `https://aiendurance.com/mcp`.
 
+**Plugin:** the [`claude-plugin/`](claude-plugin/) folder holds the AI Endurance plugin for Claude. It uses the same connector and adds four skills: a daily check-in, activity analysis, a weekly plan review and weather pacing for today's run.
+
 **Example:**
 ```
 You: "How was my ride yesterday?"
