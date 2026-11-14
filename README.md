@@ -64,28 +64,12 @@ Claude: [Displays power distribution, External Stress Score, duration, and zone 
 
 Any MCP 2025-06-18 compliant client can connect using:
 
-**Streamable HTTP Configuration (Recommended):**
+**Streamable HTTP Configuration:**
 ```json
 {
   "url": "https://aiendurance.com/mcp",
   "transport": {
     "type": "http"
-  },
-  "auth": {
-    "type": "oauth",
-    "authorizationUrl": "https://aiendurance.com/authorize/",
-    "tokenUrl": "https://aiendurance.com/api/o/token/",
-    "scopes": ["read", "write"]
-  }
-}
-```
-
-**SSE Transport Configuration (Legacy):**
-```json
-{
-  "url": "https://aiendurance.com/mcp",
-  "transport": {
-    "type": "sse"
   },
   "auth": {
     "type": "oauth",
@@ -550,7 +534,7 @@ Recovery model data including:
 - rMSSD (heart rate variability - parasympathetic activity)
 - Resting heart rate trends
 - External stress score
-- Orthopedic recovery (joint/muscle recovery for cycling, running, swimming)
+- Muscle/joint recovery for cycling, running, swimming
 
 Parameters:
 - `days_back` (optional): How many days of daily recovery data to return, 1-90 (defaults to 14)
@@ -559,7 +543,7 @@ Returns:
 - Time-series data showing recovery trends (past 14 days by default)
 - Current recovery status
 - Recovery drivers (what's limiting recovery today)
-- Activity-specific orthopedic recovery
+- Activity-specific muscle/joint recovery
 
 **`getPlanProgress`**
 Training plan progress showing adherence to prescribed training zones.
@@ -628,7 +612,7 @@ Disconnect access anytime in your mcp client.
 ## Technical Specifications
 
 - **Protocol Version**: MCP 2025-06-18
-- **Transport**: Streamable HTTP (preferred) or SSE (legacy)
+- **Transport**: Streamable HTTP
 - **Authentication**: OAuth 2.0
 - **Message Format**: JSON-RPC 2.0
 - **Tool Results**: every tool declares an `outputSchema`. A successful `tools/call` result returns the JSON in a `content` text block and, identically, in `structuredContent`, which conforms to that schema. Results with `isError: true` carry the message in `content` only.
@@ -694,12 +678,21 @@ When a tool fails because of a problem on our side, the message does not expose 
 - **Claude Code**
 
 ### Compatible (not officially tested)
-- Any MCP 2025-06-18 compliant client using Streamable HTTP or SSE transport
+- Any MCP 2025-06-18 compliant client using the Streamable HTTP transport
 - Cursor, Continue, Cline (developer tools)
 - Clients that validate results against `outputSchema`, such as the LiteLLM MCP proxy and Hermes Agent
 - Custom MCP client implementations
 
 ## Changelog
+
+### Version 1.3.3 (2026-11-14)
+
+**Changed:**
+- A `GET` on the server URL now returns HTTP 405 Method Not Allowed. The server sends no messages of its own, and 405 is the answer the MCP specification defines for a Streamable HTTP server without an event stream. Before, the request was answered with an event stream that closed at once, which some clients read as a dropped connection and reconnected to in a loop.
+- The recovery model's descriptions say "muscle/joint recovery", the name the AI Endurance app uses, instead of "orthopedic recovery". The data is unchanged.
+
+**Removed:**
+- The legacy HTTP+SSE transport (a `GET` that returned an `endpoint` event, with messages posted to `/mcp/messages`). A client configured with `"type": "sse"` needs to switch to `"type": "http"` with the same URL.
 
 ### Version 1.3.2 (2026-10-13)
 
