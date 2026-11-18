@@ -60,6 +60,29 @@ You: "How was my ride yesterday?"
 Claude: [Displays power distribution, External Stress Score, duration, and zone breakdown]
 ```
 
+### Gemini (early access)
+
+AI Endurance is not in a Gemini directory yet, but you can add it yourself as a custom app. Google documents the feature here: https://support.google.com/gemini/answer/17209137
+
+**Setup:**
+1. Open the Gemini web app (gemini.google.com) on a computer and go to Settings > Connected Apps
+2. Under "Custom apps", add a custom app and enter the URL `https://aiendurance.com/mcp` (leave client ID and secret empty)
+3. Authorize with your AI Endurance account
+4. Start a prompt with `@AI Endurance`, or simply ask about your training
+
+Once connected, the app is also available in the Gemini mobile app.
+
+**Good to know:**
+- Google currently offers custom apps only to personal Google accounts of users aged 18 or over in the US, with Gemini set to English and History turned on
+- Outside the US, Gemini Developer Mode (https://gemini.google.com/devmode) accepts the same URL under "Create new". This is how we tested it ourselves, and it worked as of November 2026. It is a developer feature and Google may change or remove it
+- Gemini returns text answers; the interactive widgets are not shown
+
+**Example:**
+```
+You: "@AI Endurance what does my training look like this week?"
+Gemini: [Lists your planned workouts with structure and targets]
+```
+
 ### Other MCP-Compatible Clients
 
 Any MCP 2025-06-18 compliant client can connect using:
@@ -676,6 +699,7 @@ When a tool fails because of a problem on our side, the message does not expose 
 - **ChatGPT** (web, iOS, Android - from the plugin directory, with interactive widgets)
 - **Claude** (web, desktop, iOS, Android - from the connector directory)
 - **Claude Code**
+- **Gemini** (web, added through Developer Mode - text answers, early access, tested November 2026)
 
 ### Compatible (not officially tested)
 - Any MCP 2025-06-18 compliant client using the Streamable HTTP transport
